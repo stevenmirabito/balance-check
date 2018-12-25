@@ -31,7 +31,9 @@ class BalanceCheckProvider:
 
 
 from balance_check.providers.blackhawk import Blackhawk
+from balance_check.providers.spafinder import Spafinder
 
 providers: Mapping[str, BalanceCheckProvider] = {
-    'Blackhawk': Blackhawk()
+    'Blackhawk': Blackhawk(),
+    'Spafinder': Spafinder()
 }
