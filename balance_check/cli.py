@@ -1,8 +1,9 @@
 import sys
 import csv
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from argparse import ArgumentParser, RawTextHelpFormatter
 from tqdm import tqdm
-from balance_check import logger
+from balance_check import logger, config
 from balance_check.providers import providers
 
 
@@ -33,24 +34,37 @@ Example:
     args = parser.parse_args()
 
     with open(args.input, newline="") as input_csv:
-        # Total number of rows in file, subtracting header row and excluding empty lines
-        total = sum(0 if row.strip() == "" else 1 for row in input_csv) - 1
-        input_csv.seek(0)
-
-        if total < 1:
-            logger.warning("Nothing to do.", file=sys.stderr)
-            sys.exit(2)
-
         reader = csv.DictReader(input_csv)
-        for row in tqdm(reader, total=total):
-            provider = row.pop('provider', None)
 
-            if not provider:
-                logger.error("You must specify a provider for each card. See usage.")
-                sys.exit(1)
+        with ThreadPoolExecutor(max_workers=config.MAX_WORKERS) as executor:
+            futures = {}
 
-            if provider not in providers:
-                logger.warning("Unknown provider: '{}', skipping".format(row["provider"]))
-                continue
+            for row in reader:
+                provider = row.pop('provider', None)
 
-            providers[provider].check_balance(**row)
+                if not provider:
+                    logger.error("You must specify a provider for each card. See usage.")
+                    sys.exit(1)
+
+                if provider not in providers:
+                    logger.warning("Unknown provider: '{}', skipping".format(row["provider"]))
+                    continue
+
+                future = executor.submit(providers[provider].check_balance, **row)
+                futures[future] = next(iter(row.values()))  # First column value, usually card number
+
+            # Update progress bar as tasks complete
+            for future in tqdm(as_completed(futures), total=len(futures)):
+                card_id = futures[future]
+
+                try:
+                    result = future.result()
+                except Exception as e:
+                    logger.error("Failed to balance check {}: {}".format(card_id, e))
+                else:
+                    # TODO: Output CSV
+                    print(result)
+
+
+if __name__ == "__main__":
+    main()

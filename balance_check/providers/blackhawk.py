@@ -1,7 +1,7 @@
 import sys
 import requests
 from bs4 import BeautifulSoup
-from balance_check import logger, captcha_solver
+from balance_check import logger, captcha_solver, config
 from balance_check.providers import BalanceCheckProvider
 from balance_check.validators.credit_card import Issuer, CreditCardSchema
 
@@ -16,7 +16,7 @@ class Blackhawk(BalanceCheckProvider):
     def scrape(self, fields):
         session = requests.Session()
         session.headers.update({
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:64.0) Gecko/20100101 Firefox/64.0"
+            "User-Agent": config.USER_AGENT
         })
 
         fields["X-Requested-With"] = "XMLHttpRequest"

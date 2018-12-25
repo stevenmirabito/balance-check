@@ -16,7 +16,7 @@ def configure_logger(logger):
     logger.setLevel(logging.INFO)
     handler = TqdmHandler()
     formatter = colorlog.ColoredFormatter(
-        '%(log_color)s[%(levelname)s] %(message)s',
+        '%(log_color)s(%(threadName)s) [%(levelname)s] %(message)s',
         log_colors={
             'DEBUG': 'white',
             'INFO': 'cyan',
