@@ -13,7 +13,7 @@ def main():
     parser = ArgumentParser(
         formatter_class=RawTextHelpFormatter,
         description="""Check gift card balances for a variety of providers.
-        
+
 Supported providers:
 {}
 
@@ -31,7 +31,10 @@ Example (for the 'blackhawk' provider):
 | card_number      | exp_month | exp_year | cvv |
 |------------------------------|----------|-----|
 | 4111111111111111 | 12        | 24       | 999 |
--------------------------------------------------""".format(providers_help))
+-------------------------------------------------
+
+If you find this tool useful, consider buying a coffee for the author:
+https://stevenmirabito.com/kudos""".format(providers_help))
 
     parser.add_argument("-v", "--version", action="version", version="%(prog)s {}".format(version.__version__))
     parser.add_argument("provider", metavar="PROVIDER", type=str.lower,
