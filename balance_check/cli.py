@@ -8,31 +8,47 @@ from balance_check.providers import providers
 
 
 def main():
+    providers_help = "\n".join(["  - {}".format(p_name) for p_name in providers.keys()])
+
     parser = ArgumentParser(
         formatter_class=RawTextHelpFormatter,
         description="""Check gift card balances for a variety of providers.
+        
+Supported providers:
+{}
+
+Requires an Anti-CAPTCHA API key for providers with CAPTCHAs.
+Get one here: https://anti-captcha.com
+Configure your key by setting the ANTI_CAPTCHA_KEY environment variable.
 
 Your INPUT_CSV should be formatted as follows:
   - A header row is required
-  - The first column must be 'provider'
-  - Subsequent columns should contain the parameters required by
+  - Each column should contain a parameter required by
     the specified provider
 
-Example:
---------------------------------------
-| provider  | card_number      | ... |
-|------------------------------------|
-| Blackhawk | 4111111111111111 | ... |
---------------------------------------""")
+Example (for the 'blackhawk' provider):
+-------------------------------------------------
+| card_number      | exp_month | exp_year | cvv |
+|------------------------------|----------|-----|
+| 4111111111111111 | 12        | 24       | 999 |
+-------------------------------------------------""".format(providers_help))
 
     parser.add_argument("-v", "--version", action="version", version="%(prog)s {}".format(version.__version__))
+    parser.add_argument("provider", metavar="PROVIDER", type=str.lower,
+                        help="Name of balance check provider")
     parser.add_argument("input", metavar="INPUT_CSV", type=str,
-                        help="Path to Input CSV")
+                        help="Path to input CSV")
     parser.add_argument("-o", "--output", metavar="OUTPUT_CSV", type=str,
                         help="Path to output CSV (optional; default: add/overwrite\n'balance' column on input "
                              "spreadsheet)")
 
     args = parser.parse_args()
+
+    if args.provider not in providers:
+        logger.fatal("Unknown provider: '{}'".format(args.provider))
+        sys.exit(1)
+
+    provider = providers[args.provider]
 
     with open(args.input, newline="") as input_csv:
         reader = csv.DictReader(input_csv)
@@ -41,17 +57,7 @@ Example:
             futures = {}
 
             for row in reader:
-                provider = row.pop('provider', None)
-
-                if not provider:
-                    logger.error("You must specify a provider for each card. See usage.")
-                    sys.exit(1)
-
-                if provider not in providers:
-                    logger.warning("Unknown provider: '{}', skipping".format(row["provider"]))
-                    continue
-
-                future = executor.submit(providers[provider].check_balance, **row)
+                future = executor.submit(provider.check_balance, **row)
                 futures[future] = next(iter(row.values()))  # First column value, usually card number
 
             # Update progress bar as tasks complete
