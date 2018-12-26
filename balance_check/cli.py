@@ -60,12 +60,13 @@ https://stevenmirabito.com/kudos""".format(providers_help))
     provider = providers[args.provider]
     futures = {}
     results = []
+    retries = {}
 
-    try:
-        with open(in_filename, newline="") as input_csv:
-            reader = csv.DictReader(input_csv)
+    with ThreadPoolExecutor(max_workers=config.MAX_WORKERS) as executor:
+        try:
+            with open(in_filename, newline="") as input_csv:
+                reader = csv.DictReader(input_csv)
 
-            with ThreadPoolExecutor(max_workers=config.MAX_WORKERS) as executor:
                 for row in reader:
                     # Add the card details to the result
                     results.append(row)
@@ -74,26 +75,47 @@ https://stevenmirabito.com/kudos""".format(providers_help))
                     # Schedule balance check
                     future = executor.submit(provider.check_balance, **row)
                     futures[future] = idx
-    except (OSError, IOError) as err:
-        logger.fatal("Unable to open input file '{}': {}".format(in_filename, err))
-        sys.exit(1)
-    except Exception as e:
-        logger.fatal("Unexpected error: {}".format(e))
-        sys.exit(1)
-
-    # Update progress bar as checks complete
-    for future in tqdm(as_completed(futures), total=len(futures)):
-        result_idx = futures[future]
-
-        try:
-            balance_info = future.result()
+        except (OSError, IOError) as err:
+            logger.fatal("Unable to open input file '{}': {}".format(in_filename, err))
+            sys.exit(1)
         except Exception as e:
-            # Log the first column value as an ID (usually card number)
-            card_id = next(iter(results[result_idx].values()))
-            logger.error("Failed to balance check {}: {}".format(card_id, e))
-        else:
-            # Combine original card details with balance information
-            results[result_idx] = dict(results[result_idx], **balance_info)
+            logger.fatal("Unexpected error: {}".format(e))
+            sys.exit(1)
+
+        # While there are still tasks queued, jump back in (handles retries)
+        while futures:
+            # Update progress bar as tasks complete
+            for future in tqdm(as_completed(futures), total=len(futures), leave=False):
+                idx = futures.pop(future)
+
+                try:
+                    balance_info = future.result()
+                except Exception as e:
+                    # Log the first column value as an ID (usually card number)
+                    card_id = next(iter(results[idx].values()))
+
+                    # Attempt to schedule retry
+                    if idx in retries:
+                        retries[idx] += 1
+                        if retries[idx] > config.RETRY_TIMES:
+                            # Out of retries, permanent failure
+                            logger.error(
+                                "Failed to balance check {} (out of retries). Last error: {}".format(card_id, e))
+                    else:
+                        retries[idx] = 1
+
+                    logger.warning("RETRY {}/{}: Failed to balance check {}, retrying. Error: {}".format(
+                        retries[idx],
+                        config.RETRY_TIMES,
+                        card_id,
+                        e
+                    ))
+
+                    future = executor.submit(provider.check_balance, **results[idx])
+                    futures[future] = idx
+                else:
+                    # Combine original card details with balance information
+                    results[idx] = dict(results[idx], **balance_info)
 
     try:
         with open(out_filename, "w", newline="") as output_csv:
