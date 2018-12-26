@@ -1,45 +1,45 @@
 language: python
 matrix:
   include:
-    - os: linux
-      python: 3.7
-      sudo: true
-      dist: xenial
-    - os: osx
-      language: generic
-      env:
-        - BREW_PYTHON_PACKAGE=python@3
+  - os: linux
+    python: 3.7
+    sudo: true
+    dist: xenial
+  - os: osx
+    language: generic
+    env:
+    - BREW_PYTHON_PACKAGE=python@3
 install:
-  - |
-    if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
-        if [[ -n "$BREW_PYTHON_PACKAGE" ]]; then
-            brew update
-            if ! brew list --versions "$BREW_PYTHON_PACKAGE" >/dev/null; then
-                brew install "$BREW_PYTHON_PACKAGE"
-            elif ! brew outdated "$BREW_PYTHON_PACKAGE"; then
-                brew upgrade "$BREW_PYTHON_PACKAGE"
-            fi
-        fi
-        pip install virtualenv
-    fi
+- |
+  if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
+      if [[ -n "$BREW_PYTHON_PACKAGE" ]]; then
+          brew update
+          if ! brew list --versions "$BREW_PYTHON_PACKAGE" >/dev/null; then
+              brew install "$BREW_PYTHON_PACKAGE"
+          elif ! brew outdated "$BREW_PYTHON_PACKAGE"; then
+              brew upgrade "$BREW_PYTHON_PACKAGE"
+          fi
+      fi
+      pip install virtualenv
+  fi
 script:
-  - |
-    if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
-        virtualenv ~/virtualenv/python37 -p python3
-        source ~/virtualenv/python37/bin/activate
-    fi
-  - python --version
-  - pip install pyinstaller
-  - echo "__version__ = '$(git describe --tags --always)'" > balance_check/version.py
-  - pip install -e .
-  - pyinstaller balance-check.spec
-  - mv dist/balance-check dist/balance-check-$TRAVIS_OS_NAME
+- |
+  if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
+      virtualenv ~/virtualenv/python37 -p python3
+      source ~/virtualenv/python37/bin/activate
+  fi
+- python --version
+- pip install pyinstaller
+- echo "__version__ = '$(git describe --tags --always)'" > balance_check/version.py
+- pip install -e .
+- pyinstaller balance-check.spec
+- tar -czvf dist/balance-check-$TRAVIS_TAG-$TRAVIS_OS_NAME.tar.gz dist/balance-check
 deploy:
   provider: releases
   api_key:
-    secure: pMfhJg/io7H5LKb3c1PVoK8vaZnGh4Ggyc9S2A/KMKXNQ5Xb3qrFUgiOlduaA9RwvR5Lj0tmzeTaZHipRqIS5sbgIfrcOm9Dxi+kqSE9Le3lYmZQhTyFLSJJbCcwgZJYgI8iGD3eNJe5j9EFAWHobp2LBEYtTWn+uAeBa6Djd8jenhSQtLSExq55xYOE809FytovfpcsiA917L6puO4hMyVQpPj8Lswlc6VHco21R0P1qvwGnvxIGmiuEXzGSNaeRm6VPxCUEikY6bXZAc6LLwfdH/+eXI5gXScBGpW4BZE6V4u817eOg8npBPtViWzmB+9B5Z3bjQ8J3CQ2e7nqGZ224J+3tfcqzVwPpSdRqjxN4oNLCtHGJ7oDlpLyhmCmKoCF/NyvRoJtpF00sYUIII5UMYoAFeTOVirOXjEYy3LO/QP6jjfP5ifdfXJpugT1sYgRQIep/teHqbN1iNJTyCp7gvJ1/oClhFFGCztNd4QCeg4SmUxyhI4teLGn9xyH5TEMuHliSfQ1hkGPoLdWGvVWjiFIUjJHszfm4yPbzoDvW4eqSX0287TW+osfRBY64JHmPtxyOFYAGnZWMPKbZ0fPO+S7gn/VVVrRfeY99pr8JP34Yaen6biel5bWHYhis+pJAvjBpeZCDd5k1PPRZaAeyPJ2kShwE0+iTIFXAeU=
+    secure: "e/yikLHp6i/ekJfdUfkkzk4B9O0EFZgA8eAgtuxtylda0qIBVbk+FoordKZeGPQTRZjRunDyV81QNs0Bj0Qz01oJBYPVAQIGfivyKgGpSYRn1/0v7lE0fQL/dnx+yIIIzqwuW33uoMcYL/vrZzDaFUhknY4Iqhxl7oqsCYepekLCKNvO9hteAnfHLTjgYICWDhEdpQ65phaB89rHrAxJvsQFEqD1kqrO0iP9ntSKeWe4yWbcVZ8F8UKAMmkukpIJ+0CihVrucOiXPK+VHWVrwwqAVCzdJGNIy50I4issWHaC5tSTg9edFtV8DfYVlEWUTdmjNyU9oNYw+OX1iuufal91tRhvq8DPyxUwdtU5WW5PCFmVlI20S2A+IsxhK2OmsZ2LjPnEqTCINjT850P1yGiGJC1YeZy0pLv147P5zVILoSKZAw/P0N/wjHXi3sHc0Am+mMAD1Gk2EMHibDk7dFj3P/4jAyNK2gc75j70+rarIYp2kpXHBBk9ILN0tqndr5uOcEsE2Hn1E7wChUxa2Kymt14KnkknSLC/SxjtXZCgC35lePI+WjBsPtM73LI1BEEWcFt95VSnRUi5WgxBGRVCpaZNZgo4jnw56mnWenH+ozKW6XdsH+hGtsP+Zz7dVecvmavTwcLK2nyMxl8a6pcIc3Wd1peZ2JvqxgHpf3s="
   file_glob: true
-  file: dist/balance-check*
+  file: dist/balance-check*.tar.gz
   skip_cleanup: true
   on:
     repo: stevenmirabito/balance-check

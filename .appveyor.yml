@@ -12,17 +12,22 @@ install:
   - ps: Set-Content "balance_check\\version.py" ( "__version__ = '{0}'" -f ( git describe --tags --always ) )
   - "%PYTHON%\\Scripts\\pip install -e ."
   - "%PYTHON%\\Scripts\\pyinstaller balance-check.spec"
-  - "move dist\\balance-check.exe dist\\balance-check%ARCH%.exe"
+  - ps: |
+      $env:ARCHIVE_VERSION = $env:APPVEYOR_REPO_COMMIT.Substring(0, 8)
+      if ($env:APPVEYOR_REPO_TAG -eq "true") {
+          # Building a tag
+          $env:ARCHIVE_VERSION = $env:APPVEYOR_REPO_TAG_NAME
+      }
+      7z a dist\balance-check-$env:ARCHIVE_VERSION-win$env:ARCH.zip dist\balance-check.exe
 build: off
 artifacts:
-  - path: "dist\\balance-check.exe"
-  - path: "dist\\balance-check%ARCH%.exe"
-  - path: "dist\\balance-check32.exe"
-  - path: "dist\\balance-check64.exe"
+  - path: "dist\\balance-check*.zip"
 deploy:
   provider: GitHub
+  artifact: /.*\.zip/
+  force_update: true
   auth_token:
-    secure: bDOSWai8o85Ss9rEqEXkfZi27ijVDfMlpb6x910VlobREuINsS3RuG7lvAp+vU4s
+    secure: cQFP/T5Dnyh3SwHoRFsK23P2gyXa5j+ROCMuq4x2nIU5bycGRZO4snTmwX5CJ1pP
   on:
     branch: master
     APPVEYOR_REPO_TAG: true

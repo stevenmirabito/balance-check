@@ -19,7 +19,7 @@ Automation tool for checking the balance of gift cards issued by various provide
 Providers marked with <sup>CAPTCHA</sup> will require an [Anti-CAPTCHA](https://anti-captcha.com) API key.
 
 ## Quick Start
-Download the appropriate standalone executable file for your operating system from the [releases page](https://github.com/stevenmirabito/balance-check/releases).
+Download and extract the appropriate standalone executable file for your operating system from the [releases page](https://github.com/stevenmirabito/balance-check/releases).
 
 ### Windows
 
@@ -31,10 +31,10 @@ cd C:\Users\John\Downloads
 
 Or, open the folder in Explorer, hold the `SHIFT` key, and choose "Open Command Prompt Here" from the context menu.
 
-From that command prompt window, run the following to display the full usage message (replace `64` with `32` if you downloaded the 32-bit version):
+From that command prompt window, run the following to display the full usage message:
 
 ```
-balance-check64.exe -h
+balance-check.exe -h
 ```
 
 To configure your Anti-CAPTCHA API key, run the following (replacing `<key>` with your key):
@@ -46,14 +46,14 @@ set ANTI_CAPTCHA_KEY="<key>"
 To run a balance check using the `blackhawk` provider using a CSV on your desktop, you might run the following:
 
 ```
-balance-check64.exe blackhawk C:\Users\John\Desktop\cards.csv
+balance-check.exe blackhawk C:\Users\John\Desktop\cards.csv
 ```
 
 Instead of typing out the full path to the input CSV, you can also drag-and-drop the CSV into the command prompt window after typing the first part of the command.
 
-### macOS
+### macOS & Linux
 
-Open the Terminal (Applications -> Utilities -> Terminal) and `cd` to the directory where you downloaded the binary, e.g.:
+Open a terminal (macOS: Applications -> Utilities -> Terminal) and `cd` to the directory where you downloaded the binary, e.g.:
 
 ```
 cd ~/Downloads
@@ -62,7 +62,7 @@ cd ~/Downloads
 From that termal window, run the following to display the full usage message:
 
 ```
-balance-check-osx -h
+balance-check -h
 ```
 
 To configure your Anti-CAPTCHA API key, run the following (replacing `<key>` with your key):
@@ -74,27 +74,7 @@ export ANTI_CAPTCHA_KEY="<key>"
 To run a balance check using the `blackhawk` provider using a CSV on your desktop, you might run the following:
 
 ```
-balance-check-osx blackhawk ~/Desktop/cards.csv
-```
-
-### Linux
-
-Open a terminal and `cd` to the directory where you downloaded the binary. From that termal window, run the following to display the full usage message:
-
-```
-balance-check-linux -h
-```
-
-To configure your Anti-CAPTCHA API key, run the following (replacing `<key>` with your key):
-
-```
-export ANTI_CAPTCHA_KEY="<key>"
-```
-
-To run a balance check using the `blackhawk` provider using a CSV on your desktop, you might run the following:
-
-```
-balance-check-linux blackhawk ~/Desktop/cards.csv
+balance-check blackhawk ~/Desktop/cards.csv
 ```
 
 ## CSV Format
