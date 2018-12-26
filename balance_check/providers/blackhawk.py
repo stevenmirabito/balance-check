@@ -15,9 +15,7 @@ class Blackhawk(BalanceCheckProvider):
 
     def scrape(self, fields):
         session = requests.Session()
-        session.headers.update({
-            "User-Agent": config.USER_AGENT
-        })
+        session.headers.update({"User-Agent": config.USER_AGENT})
 
         fields["X-Requested-With"] = "XMLHttpRequest"
 
@@ -25,7 +23,11 @@ class Blackhawk(BalanceCheckProvider):
 
         resp = session.get(self.website_url)
         if resp.status_code != 200:
-            logger.critical("Failed to GET Blackhawk website (status code {})".format(resp.status_code))
+            logger.critical(
+                "Failed to GET Blackhawk website (status code {})".format(
+                    resp.status_code
+                )
+            )
             sys.exit(1)
 
         page_html = BeautifulSoup(resp.content, features="html.parser")
@@ -37,7 +39,9 @@ class Blackhawk(BalanceCheckProvider):
 
         endpoint = "{}{}".format(self.website_url, form["action"])
 
-        token_field = transactions.find("input", attrs={"name": "__RequestVerificationToken"})
+        token_field = transactions.find(
+            "input", attrs={"name": "__RequestVerificationToken"}
+        )
         if not token_field:
             logger.critical("Failed to retrieve verification token")
             sys.exit(1)
@@ -53,64 +57,71 @@ class Blackhawk(BalanceCheckProvider):
 
         logger.info("Solving reCAPTCHA (~30s)")
 
-        captcha_resp = captcha_solver.solve_recaptcha(self.website_url, site_key)
-        if captcha_resp["errorId"] != 0:
-            logger.critical("Unable to solve reCAPTCHA ({})".format(captcha_resp["errorDescription"]))
+        captcha = captcha_solver.solve_recaptcha(self.website_url, site_key)
+        if captcha["errorId"] != 0:
+            logger.critical(
+                "Unable to solve reCAPTCHA ({})".format(captcha["errorDescription"])
+            )
             sys.exit(1)
 
-        fields["g-recaptcha-response"] = captcha_resp["solution"]["gRecaptchaResponse"]
+        fields["g-recaptcha-response"] = captcha["solution"]["gRecaptchaResponse"]
 
         logger.info("Fetching card balance")
 
-        session.headers.update({
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Accept-Language": "en-US,en;q=0.5",
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-            "Pragma": "no-cache",
-            "Referer": "https://mygift.giftcardmall.com/",
-            "X-Requested-With": "XMLHttpRequest"
-        })
+        session.headers.update(
+            {
+                "Accept": "*/*",
+                "Accept-Encoding": "gzip, deflate, br",
+                "Accept-Language": "en-US,en;q=0.5",
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                "Pragma": "no-cache",
+                "Referer": "https://mygift.giftcardmall.com/",
+                "X-Requested-With": "XMLHttpRequest",
+            }
+        )
 
         form_resp = session.post(endpoint, data=fields)
         if form_resp.status_code != 200:
-            logger.critical("Failed to retrieve card balance (status code {})".format(form_resp.status_code))
+            logger.critical(
+                "Failed to retrieve card balance (status code {})".format(
+                    form_resp.status_code
+                )
+            )
             sys.exit(1)
 
         balance_html = BeautifulSoup(form_resp.content, features="html.parser")
 
-        avail_balance = balance_html \
-            .find("div", text="Available Balance") \
-            .parent \
-            .find("div", class_="value") \
+        avail_balance = (
+            balance_html.find("div", text="Available Balance")
+            .parent.find("div", class_="value")
             .text
+        )
 
-        initial_balance = balance_html \
-            .find("div", text="Initial Balance") \
-            .parent \
-            .find("div", class_="value") \
+        initial_balance = (
+            balance_html.find("div", text="Initial Balance")
+            .parent.find("div", class_="value")
             .text
+        )
 
         logger.info("Success! Card balance: {}".format(avail_balance))
 
-        return ({
-            "initial_balance": initial_balance,
-            "available_balance": avail_balance
-        })
+        return {"initial_balance": initial_balance, "available_balance": avail_balance}
 
     def check_balance(self, **kwargs):
         if self.validate(kwargs):
-            logger.info("Checking balance for card: {}, exp {}/{}".format(
-                kwargs["card_number"],
-                kwargs["exp_month"],
-                kwargs["exp_year"]
-            ))
+            logger.info(
+                "Checking balance for card: {}, exp {}/{}".format(
+                    kwargs["card_number"], kwargs["exp_month"], kwargs["exp_year"]
+                )
+            )
 
-            return self.scrape({
-                "CardNumber": kwargs["card_number"],
-                "ExpirationDateMonth": kwargs["exp_month"],
-                "ExpirationDateYear": kwargs["exp_year"],
-                "SecurityCode": kwargs["cvv"]
-            })
+            return self.scrape(
+                {
+                    "CardNumber": kwargs["card_number"],
+                    "ExpirationDateMonth": kwargs["exp_month"],
+                    "ExpirationDateYear": kwargs["exp_year"],
+                    "SecurityCode": kwargs["cvv"],
+                }
+            )

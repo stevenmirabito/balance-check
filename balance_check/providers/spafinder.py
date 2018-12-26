@@ -16,15 +16,17 @@ class Spafinder(BalanceCheckProvider):
 
     def scrape(self, fields):
         session = requests.Session()
-        session.headers.update({
-            "User-Agent": config.USER_AGENT
-        })
+        session.headers.update({"User-Agent": config.USER_AGENT})
 
         logger.info("Fetching balance check page")
 
         resp = session.get(self.website_url)
         if resp.status_code != 200:
-            raise RuntimeError("Failed to GET Spafinder website (status code {})".format(resp.status_code))
+            raise RuntimeError(
+                "Failed to GET Spafinder website (status code {})".format(
+                    resp.status_code
+                )
+            )
 
         page_html = BeautifulSoup(resp.content, features="html.parser")
         inquiry = page_html.find(id="balance-inquiry")
@@ -45,7 +47,11 @@ class Spafinder(BalanceCheckProvider):
 
         captcha_resp = captcha_solver.solve_recaptcha(self.website_url, site_key)
         if captcha_resp["errorId"] != 0:
-            raise RuntimeError("Unable to solve reCAPTCHA ({})".format(captcha_resp["errorDescription"]))
+            raise RuntimeError(
+                "Unable to solve reCAPTCHA ({})".format(
+                    captcha_resp["errorDescription"]
+                )
+            )
 
         fields["g-recaptcha-response"] = captcha_resp["solution"]["gRecaptchaResponse"]
 
@@ -53,12 +59,18 @@ class Spafinder(BalanceCheckProvider):
 
         form_resp = session.post(endpoint, data=fields)
         if form_resp.status_code != 200:
-            raise RuntimeError("Failed to retrieve card balance (status code {})".format(form_resp.status_code))
+            raise RuntimeError(
+                "Failed to retrieve card balance (status code {})".format(
+                    form_resp.status_code
+                )
+            )
 
         resp_html = BeautifulSoup(form_resp.content, features="html.parser")
         error_html = resp_html.find("div", class_="alert-danger")
         if error_html:
-            raise RuntimeError("Got error while checking balance: {}".format(error_html.text))
+            raise RuntimeError(
+                "Got error while checking balance: {}".format(error_html.text)
+            )
 
         balance_container = resp_html.find("div", class_="alert-success")
         if not balance_container:
@@ -72,21 +84,23 @@ class Spafinder(BalanceCheckProvider):
 
         logger.info("Success! Card balance: {}".format(balance))
 
-        return ({
-            "balance": balance
-        })
+        return {"balance": balance}
 
     def check_balance(self, **kwargs):
         if self.validate(kwargs):
-            logger.info("Checking balance for card: {}, exp {}/{}".format(
-                kwargs["card_number"],
-                kwargs["exp_month"],
-                kwargs["exp_year"]
-            ))
+            logger.info(
+                "Checking balance for card: {}, exp {}/{}".format(
+                    kwargs["card_number"], kwargs["exp_month"], kwargs["exp_year"]
+                )
+            )
 
-            return self.scrape({
-                "number-1": kwargs["card_number"],
-                "valid-mm": str(int(kwargs["exp_month"])),  # Lazy way to strip '0' prefix, if present
-                "valid-yy": "20{}".format(kwargs["exp_year"]),
-                "pin": kwargs["cvv"]
-            })
+            return self.scrape(
+                {
+                    "number-1": kwargs["card_number"],
+                    "valid-mm": str(
+                        int(kwargs["exp_month"])
+                    ),  # Lazy way to strip '0' prefix, if present
+                    "valid-yy": "20{}".format(kwargs["exp_year"]),
+                    "pin": kwargs["cvv"],
+                }
+            )

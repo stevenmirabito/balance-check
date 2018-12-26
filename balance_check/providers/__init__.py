@@ -37,7 +37,7 @@ class BalanceCheckProvider:
 
 # Import all provider modules
 for _, name, _ in iter_modules([os.path.dirname(__file__)]):
-    import_module('.' + name, __package__)
+    import_module("." + name, __package__)
 
 # Instantiate each provider module and populate the available providers
 providers: Mapping[str, BalanceCheckProvider] = {

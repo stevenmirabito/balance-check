@@ -35,15 +35,36 @@ Example (for the 'blackhawk' provider):
 -------------------------------------------------
 
 If you find this tool useful, consider buying a coffee for the author:
-https://stevenmirabito.com/kudos""".format(providers_help))
+https://stevenmirabito.com/kudos""".format(
+            providers_help
+        ),
+    )
 
-    parser.add_argument("-v", "--version", action="version", version="%(prog)s {}".format(version.__version__))
-    parser.add_argument("provider", metavar="PROVIDER", type=str.lower,
-                        help="Name of balance check provider")
-    parser.add_argument("input", metavar="INPUT_CSV", type=str,
-                        help="Path to input CSV")
-    parser.add_argument("--output", "-o", metavar="OUTPUT_CSV", type=str,
-                        help="Path to output CSV (optional; default: add/overwrite\nbalance columns on input CSV)")
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version="%(prog)s {}".format(version.__version__),
+    )
+    parser.add_argument(
+        "provider",
+        metavar="PROVIDER",
+        type=str.lower,
+        help="Name of balance check provider",
+    )
+    parser.add_argument(
+        "input", metavar="INPUT_CSV", type=str, help="Path to input CSV"
+    )
+    parser.add_argument(
+        "--output",
+        "-o",
+        metavar="OUTPUT_CSV",
+        type=str,
+        help=(
+            "Path to output CSV (optional; default:"
+            "add/overwrite\nbalance columns on input CSV)"
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -100,16 +121,18 @@ https://stevenmirabito.com/kudos""".format(providers_help))
                         if retries[idx] > config.RETRY_TIMES:
                             # Out of retries, permanent failure
                             logger.error(
-                                "Failed to balance check {} (out of retries). Last error: {}".format(card_id, e))
+                                "Failed to balance check {} (out of retries). Last error: {}".format(
+                                    card_id, e
+                                )
+                            )
                     else:
                         retries[idx] = 1
 
-                    logger.warning("RETRY {}/{}: Failed to balance check {}, retrying. Error: {}".format(
-                        retries[idx],
-                        config.RETRY_TIMES,
-                        card_id,
-                        e
-                    ))
+                    logger.warning(
+                        "RETRY {}/{}: Failed to balance check {}, retrying. Error: {}".format(
+                            retries[idx], config.RETRY_TIMES, card_id, e
+                        )
+                    )
 
                     future = executor.submit(provider.check_balance, **results[idx])
                     futures[future] = idx

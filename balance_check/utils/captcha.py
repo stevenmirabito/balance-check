@@ -11,4 +11,6 @@ class CaptchaSolver:
         return self.image_task.captcha_handler(captcha_link=image_link)
 
     def solve_recaptcha(self, page_url, site_key):
-        return self.recaptcha_task.captcha_handler(websiteURL=page_url, websiteKey=site_key)
+        return self.recaptcha_task.captcha_handler(
+            websiteURL=page_url, websiteKey=site_key
+        )
