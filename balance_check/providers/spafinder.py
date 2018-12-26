@@ -68,12 +68,12 @@ class Spafinder(BalanceCheckProvider):
         if not balance_match:
             raise RuntimeError("Unable to find balance text")
 
-        avail_balance = "${}".format(balance_match.group(0))
+        balance = "${}".format(balance_match.group(0))
 
-        logger.info("Success! Card balance: {}".format(avail_balance))
+        logger.info("Success! Card balance: {}".format(balance))
 
         return ({
-            "available": avail_balance
+            "balance": balance
         })
 
     def check_balance(self, **kwargs):

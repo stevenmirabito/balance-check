@@ -96,8 +96,8 @@ class Blackhawk(BalanceCheckProvider):
         logger.info("Success! Card balance: {}".format(avail_balance))
 
         return ({
-            "available": avail_balance,
-            "initial": initial_balance
+            "initial_balance": initial_balance,
+            "available_balance": avail_balance
         })
 
     def check_balance(self, **kwargs):

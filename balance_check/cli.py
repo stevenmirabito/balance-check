@@ -1,5 +1,6 @@
 import sys
 import csv
+from os import path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from argparse import ArgumentParser, RawTextHelpFormatter
 from tqdm import tqdm
@@ -41,39 +42,77 @@ https://stevenmirabito.com/kudos""".format(providers_help))
                         help="Name of balance check provider")
     parser.add_argument("input", metavar="INPUT_CSV", type=str,
                         help="Path to input CSV")
-    parser.add_argument("-o", "--output", metavar="OUTPUT_CSV", type=str,
-                        help="Path to output CSV (optional; default: add/overwrite\n'balance' column on input "
-                             "spreadsheet)")
+    parser.add_argument("--output", "-o", metavar="OUTPUT_CSV", type=str,
+                        help="Path to output CSV (optional; default: add/overwrite\nbalance columns on input CSV)")
 
     args = parser.parse_args()
+
+    in_filename = path.abspath(args.input)
+    out_filename = in_filename
+    if args.output:
+        # Separate output path specified
+        out_filename = path.abspath(args.output)
 
     if args.provider not in providers:
         logger.fatal("Unknown provider: '{}'".format(args.provider))
         sys.exit(1)
 
     provider = providers[args.provider]
+    futures = {}
+    results = []
 
-    with open(args.input, newline="") as input_csv:
-        reader = csv.DictReader(input_csv)
+    try:
+        with open(in_filename, newline="") as input_csv:
+            reader = csv.DictReader(input_csv)
 
-        with ThreadPoolExecutor(max_workers=config.MAX_WORKERS) as executor:
-            futures = {}
+            with ThreadPoolExecutor(max_workers=config.MAX_WORKERS) as executor:
+                for row in reader:
+                    # Add the card details to the result
+                    results.append(row)
+                    idx = len(results) - 1
 
-            for row in reader:
-                future = executor.submit(provider.check_balance, **row)
-                futures[future] = next(iter(row.values()))  # First column value, usually card number
+                    # Schedule balance check
+                    future = executor.submit(provider.check_balance, **row)
+                    futures[future] = idx
+    except (OSError, IOError) as err:
+        logger.fatal("Unable to open input file '{}': {}".format(in_filename, err))
+        sys.exit(1)
+    except Exception as e:
+        logger.fatal("Unexpected error: {}".format(e))
+        sys.exit(1)
 
-            # Update progress bar as tasks complete
-            for future in tqdm(as_completed(futures), total=len(futures)):
-                card_id = futures[future]
+    # Update progress bar as checks complete
+    for future in tqdm(as_completed(futures), total=len(futures)):
+        result_idx = futures[future]
 
-                try:
-                    result = future.result()
-                except Exception as e:
-                    logger.error("Failed to balance check {}: {}".format(card_id, e))
-                else:
-                    # TODO: Output CSV
-                    print(result)
+        try:
+            balance_info = future.result()
+        except Exception as e:
+            # Log the first column value as an ID (usually card number)
+            card_id = next(iter(results[result_idx].values()))
+            logger.error("Failed to balance check {}: {}".format(card_id, e))
+        else:
+            # Combine original card details with balance information
+            results[result_idx] = dict(results[result_idx], **balance_info)
+
+    try:
+        with open(out_filename, "w", newline="") as output_csv:
+            logger.info("Writing output CSV...")
+
+            fieldnames = results[0].keys()
+            writer = csv.DictWriter(output_csv, fieldnames=fieldnames)
+            writer.writeheader()
+
+            for row in results:
+                writer.writerow(row)
+
+            logger.info("Output written to: {}".format(out_filename))
+    except (OSError, IOError) as err:
+        logger.fatal("Unable to open output file '{}': {}".format(in_filename, err))
+        sys.exit(1)
+    except Exception as e:
+        logger.fatal("Unexpected error: {}".format(e))
+        sys.exit(1)
 
 
 if __name__ == "__main__":
