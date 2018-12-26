@@ -1,0 +1,29 @@
+version: "{build}"
+platform: x64
+environment:
+  matrix:
+    - PYTHON: "C:\\Python37"
+      ARCH: "32"
+    - PYTHON: "C:\\Python37-x64"
+      ARCH: "64"
+install:
+  - "%PYTHON%\\python.exe --version"
+  - "%PYTHON%\\Scripts\\pip install pyinstaller"
+  - ps: Set-Content "balance_check\\version.py" ( "__version__ = '{0}'" -f ( git describe --tags --always ) )
+  - "%PYTHON%\\Scripts\\pip install -e ."
+  - "%PYTHON%\\Scripts\\pyinstaller balance-check.spec"
+  - "move dist\\balance-check.exe dist\\balance-check%ARCH%.exe"
+build: off
+artifacts:
+  - path: "dist\\balance-check.exe"
+  - path: "dist\\balance-check%ARCH%.exe"
+  - path: "dist\\balance-check32.exe"
+  - path: "dist\\balance-check64.exe"
+deploy:
+  provider: GitHub
+  auth_token:
+    secure: bDOSWai8o85Ss9rEqEXkfZi27ijVDfMlpb6x910VlobREuINsS3RuG7lvAp+vU4s
+  on:
+    branch: master
+    APPVEYOR_REPO_TAG: true
+

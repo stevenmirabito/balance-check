@@ -3,7 +3,7 @@ import csv
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from argparse import ArgumentParser, RawTextHelpFormatter
 from tqdm import tqdm
-from balance_check import logger, config
+from balance_check import logger, config, version
 from balance_check.providers import providers
 
 
@@ -25,6 +25,7 @@ Example:
 | Blackhawk | 4111111111111111 | ... |
 --------------------------------------""")
 
+    parser.add_argument("-v", "--version", action="version", version="%(prog)s {}".format(version.__version__))
     parser.add_argument("input", metavar="INPUT_CSV", type=str,
                         help="Path to Input CSV")
     parser.add_argument("-o", "--output", metavar="OUTPUT_CSV", type=str,

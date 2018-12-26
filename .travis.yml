@@ -1,0 +1,25 @@
+language: python
+sudo: required
+dist: xenial
+python: "3.7"
+os:
+  - linux
+  - osx
+script:
+  - python --version
+  - pip install pyinstaller
+  - echo "__version__ = '$(git describe --tags --always)'" > balance_check/version.py
+  - pip install -e .
+  - pyinstaller balance-check.spec
+  - mv dist/balance-check dist/balance-check-$TRAVIS_OS_NAME
+deploy:
+  provider: releases
+  api_key:
+    secure: pMfhJg/io7H5LKb3c1PVoK8vaZnGh4Ggyc9S2A/KMKXNQ5Xb3qrFUgiOlduaA9RwvR5Lj0tmzeTaZHipRqIS5sbgIfrcOm9Dxi+kqSE9Le3lYmZQhTyFLSJJbCcwgZJYgI8iGD3eNJe5j9EFAWHobp2LBEYtTWn+uAeBa6Djd8jenhSQtLSExq55xYOE809FytovfpcsiA917L6puO4hMyVQpPj8Lswlc6VHco21R0P1qvwGnvxIGmiuEXzGSNaeRm6VPxCUEikY6bXZAc6LLwfdH/+eXI5gXScBGpW4BZE6V4u817eOg8npBPtViWzmB+9B5Z3bjQ8J3CQ2e7nqGZ224J+3tfcqzVwPpSdRqjxN4oNLCtHGJ7oDlpLyhmCmKoCF/NyvRoJtpF00sYUIII5UMYoAFeTOVirOXjEYy3LO/QP6jjfP5ifdfXJpugT1sYgRQIep/teHqbN1iNJTyCp7gvJ1/oClhFFGCztNd4QCeg4SmUxyhI4teLGn9xyH5TEMuHliSfQ1hkGPoLdWGvVWjiFIUjJHszfm4yPbzoDvW4eqSX0287TW+osfRBY64JHmPtxyOFYAGnZWMPKbZ0fPO+S7gn/VVVrRfeY99pr8JP34Yaen6biel5bWHYhis+pJAvjBpeZCDd5k1PPRZaAeyPJ2kShwE0+iTIFXAeU=
+  file_glob: true
+  file: dist/balance-check*
+  skip_cleanup: true
+  on:
+    repo: stevenmirabito/balance-check
+    tags: true
+

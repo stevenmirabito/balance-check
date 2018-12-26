@@ -1,7 +1,24 @@
+import os
 from setuptools import setup, find_packages
 
+# this sets __version__
+# via: http://stackoverflow.com/a/7071358/87207
+# and: http://stackoverflow.com/a/2073599/87207
+with open(os.path.join("balance_check", "version.py"), "rb") as f:
+    exec(f.read())
+
+requirements = [
+    'beautifulsoup4',
+    'Cerberus',
+    'colorlog',
+    'luhn',
+    'python3-anticaptcha',
+    'requests',
+    'tqdm'
+]
+
 setup(name='balance_check',
-      version='0.1',
+      version=__version__,
       description='Check gift card balances for a variety of providers',
       url='http://github.com/stevenmirabito/balance_check',
       author='Steven Mirabito',
@@ -11,12 +28,4 @@ setup(name='balance_check',
       entry_points={
           'console_scripts': ['balance-check=balance_check.cli:main'],
       },
-      install_requires=[
-          'beautifulsoup4',
-          'Cerberus',
-          'colorlog',
-          'luhn',
-          'python3-anticaptcha',
-          'requests',
-          'tqdm'
-      ])
+      install_requires=requirements)
