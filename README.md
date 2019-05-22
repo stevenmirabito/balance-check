@@ -13,8 +13,10 @@
 Automation tool for checking the balance of gift cards issued by various providers.
 
 ## Supported Providers
-- [Blackhawk / Gift Card Mall](https://mygift.giftcardmall.com) - `blackhawk` <sup>CAPTCHA</sup>
+- [Blackhawk / Gift Card Mall / Simon / 5Back](https://mygift.giftcardmall.com) - `blackhawk` <sup>CAPTCHA</sup>
 - [Spafinder](https://www.spafinder.com/pages/card-balance-inquiry/vpln) - `spafinder` <sup>CAPTCHA</sup>
+- [GameStop](https://www.gamestop.com/profiles/valuelookup.aspx) - `gamestop` <sup>CAPTCHA</sup>
+- Best Buy - `bestbuy`
 
 Providers marked with <sup>CAPTCHA</sup> will require an [Anti-CAPTCHA](https://anti-captcha.com) API key.
 

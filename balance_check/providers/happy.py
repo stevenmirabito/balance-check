@@ -6,18 +6,16 @@ from balance_check.providers import BalanceCheckProvider
 from balance_check.validators.credit_card import Issuer, CreditCardSchema
 
 
-class Blackhawk(BalanceCheckProvider):
+class Happy(BalanceCheckProvider):
     def __init__(self):
         super().__init__()
 
-        self.website_url = "https://mygift.giftcardmall.com"
+        self.website_url = "https://cardholder.happycards.com/check-your-balance"
         self.schema = CreditCardSchema([Issuer.Visa])
 
     def scrape(self, fields):
         session = requests.Session()
         session.headers.update({"User-Agent": config.USER_AGENT})
-
-        fields["X-Requested-With"] = "XMLHttpRequest"
 
         logger.info("Fetching balance check page")
 
@@ -29,15 +27,14 @@ class Blackhawk(BalanceCheckProvider):
             sys.exit(1)
 
         page_html = BeautifulSoup(resp.content, features="html.parser")
-        transactions = page_html.find(id="CheckBalanceTransactions")
-        form = transactions.find("form")
+        form = page_html.find("form")
         if not form:
             logger.critical("Unable to find balance check form")
             sys.exit(1)
 
         endpoint = "{}{}".format(self.website_url, form["action"])
 
-        token_field = transactions.find(
+        token_field = page_html.find(
             "input", attrs={"name": "__RequestVerificationToken"}
         )
         if not token_field:
@@ -46,7 +43,7 @@ class Blackhawk(BalanceCheckProvider):
 
         fields["__RequestVerificationToken"] = token_field["value"]
 
-        recaptcha_field = transactions.find("div", class_="g-recaptcha")
+        recaptcha_field = page_html.find("div", class_="g-recaptcha")
         if not recaptcha_field:
             logger.critical("Unable to find reCAPTCHA")
             sys.exit(1)
@@ -58,7 +55,7 @@ class Blackhawk(BalanceCheckProvider):
         captcha = captcha_solver.solve_recaptcha(self.website_url, site_key)
         if captcha["errorId"] != 0:
             logger.critical(
-                "Unable to solve reCAPTCHA ({})".format(captcha["errorDescription"])
+                f"Unable to solve reCAPTCHA ({captcha['errorDescription']})"
             )
             sys.exit(1)
 
@@ -75,27 +72,31 @@ class Blackhawk(BalanceCheckProvider):
                 "Connection": "keep-alive",
                 "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
                 "Pragma": "no-cache",
-                "Referer": "https://mygift.giftcardmall.com/",
+                "Referer": self.website_url,
                 "X-Requested-With": "XMLHttpRequest",
+                "Host": "cardholder.happycards.com",
+                "Origin": "https://cardholder.happycards.com",
             }
         )
 
         form_resp = session.post(endpoint, data=fields)
         if form_resp.status_code != 200:
             logger.critical(
-                "Failed to retrieve card balance (status code {})".format(
-                    form_resp.status_code
-                )
+                f"Failed to retrieve card balance (status code {form_resp.status_code})"
             )
             sys.exit(1)
 
         balance_html = BeautifulSoup(form_resp.content, features="html.parser")
 
-        avail_balance = (
-            balance_html.find("div", text="Available Balance")
-            .parent.find("div", class_="value")
-            .text
-        )
+        try:
+            avail_balance = (
+                balance_html.find("div", text="Available Balance")
+                .parent.find("div", class_="value")
+                .text
+            )
+        except:
+            print("Couldnt read available balance from page.")
+            print(form_resp.content)
 
         initial_balance = (
             balance_html.find("div", text="Initial Balance")
