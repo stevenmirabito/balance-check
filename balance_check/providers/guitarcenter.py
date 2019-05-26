@@ -1,7 +1,6 @@
 import requests
-from bs4 import BeautifulSoup
 import lxml.html
-from balance_check import logger, captcha_solver, config
+from balance_check import logger, config
 from balance_check.providers import BalanceCheckProvider
 from balance_check.validators.gift_card import Merchant, GiftCardSchema
 
@@ -30,7 +29,7 @@ class GuitarCenter(BalanceCheckProvider):
 
         if resp.status_code != 200:
             raise RuntimeError(
-                f"Failed to retrieve card balance (status code {form_resp.status_code})"
+                f"Failed to retrieve card balance (status code {resp.status_code})"
             )
 
         # Tried to use BS4 but it refused to work, I think HTML returned was too messy/non-compliant

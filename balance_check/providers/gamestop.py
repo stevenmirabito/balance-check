@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
-from balance_check import logger, captcha_solver, config
+from balance_check import logger, config
+from balance_check.utils.captcha import CaptchaSolver
 from balance_check.providers import BalanceCheckProvider
 from balance_check.validators.gift_card import Merchant, GiftCardSchema
 
@@ -49,6 +50,7 @@ class GameStop(BalanceCheckProvider):
 
         logger.info("Solving reCAPTCHA (~30s)")
 
+        captcha_solver = CaptchaSolver(api_key=config.ANTI_CAPTCHA_KEY)
         captcha_resp = captcha_solver.solve_recaptcha(self.website_url, site_key)
         if captcha_resp["errorId"] != 0:
             raise RuntimeError(

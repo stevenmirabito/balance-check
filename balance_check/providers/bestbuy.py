@@ -1,6 +1,6 @@
 import requests
 import time
-from balance_check import logger, captcha_solver, config
+from balance_check import logger
 from balance_check.providers import BalanceCheckProvider
 from balance_check.validators.gift_card import Merchant, GiftCardSchema
 from fake_useragent import UserAgent

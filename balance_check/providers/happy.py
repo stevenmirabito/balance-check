@@ -1,7 +1,8 @@
 import sys
 import requests
 from bs4 import BeautifulSoup
-from balance_check import logger, captcha_solver, config
+from balance_check import logger, config
+from balance_check.utils.captcha import CaptchaSolver
 from balance_check.providers import BalanceCheckProvider
 from balance_check.validators.credit_card import Issuer, CreditCardSchema
 
@@ -52,6 +53,7 @@ class Happy(BalanceCheckProvider):
 
         logger.info("Solving reCAPTCHA (~30s)")
 
+        captcha_solver = CaptchaSolver(api_key=config.ANTI_CAPTCHA_KEY)
         captcha = captcha_solver.solve_recaptcha(self.website_url, site_key)
         if captcha["errorId"] != 0:
             logger.critical(
