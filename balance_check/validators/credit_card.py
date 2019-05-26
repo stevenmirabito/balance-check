@@ -23,7 +23,7 @@ def luhn_check(field, value, error):
         error(field, "does not pass Luhn check")
 
 
-def CreditCardSchema(issuers):
+def CreditCardSchema(issuers, exp_date=True):
     def issuer_check(field, value, error):
         if not any(issuer_regex[issuer].match(value) for issuer in issuers):
             error(
@@ -33,26 +33,12 @@ def CreditCardSchema(issuers):
                 ),
             )
 
-    return {
+    schema = {
         "card_number": {
             "required": True,
             "type": "string",
             "empty": False,
             "validator": [issuer_check, luhn_check],
-        },
-        "exp_month": {
-            "required": True,
-            "type": "string",
-            "minlength": 2,
-            "maxlength": 2,
-            "empty": False,
-        },
-        "exp_year": {
-            "required": True,
-            "type": "string",
-            "minlength": 2,
-            "maxlength": 2,
-            "empty": False,
         },
         "cvv": {
             "required": True,
@@ -62,3 +48,25 @@ def CreditCardSchema(issuers):
             "empty": False,
         },
     }
+
+    if exp_date:
+        schema.update(
+            {
+                "exp_month": {
+                    "required": True,
+                    "type": "string",
+                    "minlength": 2,
+                    "maxlength": 2,
+                    "empty": False,
+                },
+                "exp_year": {
+                    "required": True,
+                    "type": "string",
+                    "minlength": 2,
+                    "maxlength": 2,
+                    "empty": False,
+                },
+            }
+        )
+
+    return schema

@@ -17,6 +17,11 @@ requirements = [
     "python3-anticaptcha",
     "requests",
     "tqdm",
+    "lxml",
+    "fake_useragent",
+    "selenium",
+    "Pillow",
+    "chromedriver-binary==74.0.3729.6.0",
 ]
 
 setup(

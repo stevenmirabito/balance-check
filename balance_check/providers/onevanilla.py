@@ -1,7 +1,12 @@
-import sys
-import requests
-from bs4 import BeautifulSoup
-from balance_check import logger, captcha_solver, config
+import time
+import chromedriver_binary
+from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import NoSuchElementException
+from balance_check import logger
 from balance_check.providers import BalanceCheckProvider
 from balance_check.validators.credit_card import Issuer, CreditCardSchema
 
@@ -14,63 +19,51 @@ class OneVanilla(BalanceCheckProvider):
         self.schema = CreditCardSchema([Issuer.Visa])
 
     def scrape(self, fields):
-        session = requests.Session()
-        session.headers.update(
-            {
-                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
-                "Accept-Encoding": "gzip, deflate, br",
-                "Accept-Language": "en-US,en;q=0.9",
-                "Connection": "keep-alive",
-            }
-        )
+        # Open Selenium browser
+        browser = webdriver.Chrome()
 
         logger.info("Fetching balance check page")
-        resp = session.get(self.website_url)
-        if resp.status_code != 200:
-            logger.critical(
-                f"Failed to GET OneVanilla website (status code {resp.status_code})"
+        browser.get(self.website_url)
+
+        logger.info("Filling balance check form")
+        for field, val in fields.items():
+            try:
+                browser.find_element_by_id(field).send_keys(val)
+                time.sleep(1)
+            except NoSuchElementException:
+                browser.close()
+                raise RuntimeError(f"Unable to find '{field}' field on page")
+
+        # Click submit button
+        browser.find_element_by_id("brandLoginForm_button").click()
+
+        # Wait for page to load
+        try:
+            WebDriverWait(browser, 3).until(
+                EC.presence_of_element_located((By.ID, "Avlbal"))
             )
-            sys.exit(1)
+        except TimeoutException:
+            browser.close()
+            raise RuntimeError("Balance page took too long to load")
 
-        print(resp.text)
-
-        page_html = BeautifulSoup(resp.content, features="html.parser")
-
-        action = page_html.find("form")["action"]  # brandLoginForm
-        fields["csrfToken"] = page_html.find("input", name="csrfToken")["value"]
-
-        session.headers.update(
-            {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
-                "Accept-Encoding": "gzip, deflate, br",
-                "Accept-Language": "en-US,en;q=0.9",
-                "Cache-Control": "no-cache",
-                "Connection": "keep-alive",
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Referer": self.website_url,
-                "origin": "https://www.simon.com",
-            }
-        )
-
-        logger.info("Fetching card balance")
-        form_resp = session.post(self.website_url + action[2:], data=fields)
-        if form_resp.status_code != 200:
-            logger.critical(
-                f"Failed to retrieve card balance (status code {form_resp.status_code})"
-            )
-            sys.exit(1)
-
-        balance_html = BeautifulSoup(form_resp.content, features="html.parser")
+        logger.info("Obtaining card information")
+        try:
+            avail_balance = browser.find_element_by_id("Avlbal").text
+        except NoSuchElementException:
+            browser.close()
+            raise RuntimeError("Could not find available card balance")
 
         try:
-            avail_balance = balance_html.find("li", id="Avlbal").text.strip()
-            # initial_balance = balance_html.find("li", text="Original Value:") #[-1].text.strip()
-            initial_balance = "1"
-        except:
-            print("DUMP:", resp.text)
-            raise RuntimeError("Could not find balance on page")
+            initial_balance = (
+                browser.find_element_by_class_name("rightSide")
+                .find_element_by_tag_name("span")
+                .text
+            )
+        except NoSuchElementException:
+            browser.close()
+            raise RuntimeError("Could not find initial card balance")
 
+        browser.close()
         logger.info(f"Success! Card balance: {avail_balance}")
 
         return {"initial_balance": initial_balance, "available_balance": avail_balance}
