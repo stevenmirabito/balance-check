@@ -1,8 +1,5 @@
 import time
-import base64
 import chromedriver_binary
-from io import BytesIO
-from PIL import Image
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -11,6 +8,7 @@ from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
 from balance_check import logger, config
 from balance_check.utils.captcha import CaptchaSolver
+from balance_check.utils.browser import get_image_b64_by_id
 from balance_check.providers import BalanceCheckProvider
 from balance_check.validators.credit_card import Issuer, CreditCardSchema
 
@@ -65,14 +63,8 @@ class PrepaidGiftBalance(BalanceCheckProvider):
 
         logger.info("Solving CAPTCHA (~10s)")
 
-        # Take a screenshot of the CAPTCHA image and crop
-        captcha_img = Image.open(BytesIO(browser.get_screenshot_as_png()))
-        captcha_img = captcha_img.crop(box=(124, 408, 428, 512))
-
-        # Export CAPTCHA image as base64'd PNG
-        img_buffer = BytesIO()
-        captcha_img.save(img_buffer, format="PNG")
-        captcha_b64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
+        # Extract CAPTCHA image from page
+        captcha_b64 = get_image_b64_by_id(browser, "captchaImg")
 
         captcha_solver = CaptchaSolver(api_key=config.ANTI_CAPTCHA_KEY)
         captcha = captcha_solver.solve_image_b64(captcha_b64)
