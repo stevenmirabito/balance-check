@@ -117,7 +117,7 @@ Please fork this repository, push to your fork, and open a pull request to contr
 
 ### Adding a Provider
 
-Providers must implement a uniquely-named subclass of `BalanceCheckProvider` in the `balance_check.providers` module. If your provider has been successfully registered, it will appear in the usage message as a supported provider.
+Providers must implement a uniquely-named subclass of `BalanceCheckProvider` in the `balance_check.providers` module. You must then add it to the `__all__` list in `balance_check.providers.__init__`. If your provider has been successfully registered, it will appear in the usage message as a supported provider.
 
 Your provider must implement `check_balance(self, **kwargs)` which will accept a keyword argument for each column in the input spreadsheet. You may optionally define a [Cerberus schema](http://docs.python-cerberus.org/en/stable/validation-rules.html) on `self.schema` and invoke `self.validate` with any fields you would like to validate. This is recommended to ensure your provider will not send requests with bad card data. A built-in schema generator for prepaid cards is provided in `balance_check.validators.credit_card` and convenience functions for solving CAPTCHAs are provided on `balance_check.captcha_solver`.
 

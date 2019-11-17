@@ -1,6 +1,6 @@
 import requests
 from balance_check import logger
-from balance_check.providers import BalanceCheckProvider
+from balance_check.provider import BalanceCheckProvider
 from balance_check.validators.gift_card import Merchant, GiftCardSchema
 
 

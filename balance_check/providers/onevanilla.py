@@ -7,7 +7,7 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
 from balance_check import logger
-from balance_check.providers import BalanceCheckProvider
+from balance_check.provider import BalanceCheckProvider
 from balance_check.validators.credit_card import Issuer, CreditCardSchema
 
 

@@ -1,12 +1,16 @@
 # -*- mode: python -*-
 
+from PyInstaller.utils.hooks import collect_submodules
+
 block_cipher = None
 
-a = Analysis(['balance_check/cli.py'],
+a = Analysis(['balance_check/__main__.py'],
              pathex=['balance_check'],
              binaries=None,
              datas=None,
-             hiddenimports=None,
+             hiddenimports=(
+                collect_submodules('balance_check.providers')
+             ),
              hookspath=None,
              runtime_hooks=None,
              excludes=None,

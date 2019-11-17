@@ -9,7 +9,7 @@ from selenium.common.exceptions import NoSuchElementException
 from balance_check import logger, config
 from balance_check.utils.captcha import CaptchaSolver
 from balance_check.utils.browser import get_image_b64_by_id
-from balance_check.providers import BalanceCheckProvider
+from balance_check.provider import BalanceCheckProvider
 from balance_check.validators.credit_card import Issuer, CreditCardSchema
 
 

@@ -3,7 +3,7 @@ from json import JSONDecodeError
 from balance_check import logger, config
 from balance_check.utils import deep_get
 from balance_check.utils.captcha import CaptchaSolver
-from balance_check.providers import BalanceCheckProvider
+from balance_check.provider import BalanceCheckProvider
 from balance_check.validators.gift_card import Merchant, GiftCardSchema
 
 HEADERS = {
