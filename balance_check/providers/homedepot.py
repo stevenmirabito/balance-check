@@ -3,7 +3,6 @@ from balance_check import logger, config
 from balance_check.utils.captcha import CaptchaSolver
 from balance_check.providers import BalanceCheckProvider
 from balance_check.validators.gift_card import Merchant, GiftCardSchema
-from fake_useragent import UserAgent
 
 
 # TODO - not working
@@ -20,7 +19,6 @@ class HomeDepot(BalanceCheckProvider):
         )
         self.schema = GiftCardSchema(Merchant.HomeDepot)
         self.num_runs = 0
-        self.ua = UserAgent()
         self.max_workers = 1  # Cannot run multithreaded, IP limited
 
     def scrape(self, **kwargs):

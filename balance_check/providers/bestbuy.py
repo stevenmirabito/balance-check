@@ -1,9 +1,8 @@
 import requests
 import time
-from balance_check import logger
+from balance_check import logger, config
 from balance_check.providers import BalanceCheckProvider
 from balance_check.validators.gift_card import Merchant, GiftCardSchema
-from fake_useragent import UserAgent
 
 
 class BestBuy(BalanceCheckProvider):
@@ -13,14 +12,13 @@ class BestBuy(BalanceCheckProvider):
         self.website_url = "https://www.bestbuy.com/gift-card-balance/api/lookup"
         self.schema = GiftCardSchema(Merchant.BestBuy)
         self.num_runs = 0
-        self.ua = UserAgent()
         self.max_workers = 1  # Cannot run multithreaded, IP limited
 
     def scrape(self, **kwargs):
         session = requests.Session()
         session.headers.update(
             {
-                "User-Agent": self.ua.random,  # fake UA
+                "User-Agent": config.USER_AGENT,
                 "accept": "application/json",
                 "origin": "https://www.bestbuy.com",
                 "content-type": "application/json",

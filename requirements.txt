@@ -1,1 +1,12 @@
-.
+beautifulsoup4
+black
+Cerberus
+colorlog
+luhn
+pre-commit
+python3-anticaptcha
+requests
+tqdm
+lxml
+selenium
+chromedriver-binary

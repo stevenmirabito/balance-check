@@ -4,7 +4,7 @@ from os import path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from argparse import ArgumentParser, RawTextHelpFormatter
 from tqdm import tqdm
-from balance_check import logger, config, version
+from balance_check import __version__, logger, config
 from balance_check.providers import providers
 
 
@@ -15,41 +15,44 @@ def main():
         formatter_class=RawTextHelpFormatter,
         description=f"""Check gift card balances for a variety of providers.
 
-Supported providers:
-{providers_help}
+    Supported providers:
+    {providers_help}
 
-Requires an Anti-CAPTCHA API key for providers with CAPTCHAs.
-Get one here: https://anti-captcha.com
-Configure your key by setting the ANTI_CAPTCHA_KEY environment variable.
+    Requires an Anti-CAPTCHA API key for providers with CAPTCHAs.
+    Get one here: https://anti-captcha.com
+    Configure your key by setting the ANTI_CAPTCHA_KEY environment variable.
 
-Your INPUT_CSV should be formatted as follows:
-  - A header row is required
-  - Each column should contain a parameter required by
+    Your INPUT_CSV should be formatted as follows:
+    - A header row is required
+    - Each column should contain a parameter required by
     the specified provider
 
-Example (for the 'blackhawk' provider):
--------------------------------------------------
-| card_number      | exp_month | exp_year | cvv |
-|------------------|-----------|----------|-----|
-| 4111111111111111 | 12        | 24       | 999 |
--------------------------------------------------
+    Example (for the 'blackhawk' provider):
+    -------------------------------------------------
+    | card_number      | exp_month | exp_year | cvv |
+    |------------------|-----------|----------|-----|
+    | 4111111111111111 | 12        | 24       | 999 |
+    -------------------------------------------------
 
-If you find this tool useful, consider buying a coffee for the author:
-https://stevenmirabito.com/kudos""",
+    If you find this tool useful, consider buying a coffee for the author:
+    https://stevenmirabito.com/kudos""",
     )
 
     parser.add_argument(
-        "-v", "--version", action="version", version=f"%(prog)s {version.__version__}"
+        "-v", "--version", action="version", version=f"%(prog)s {__version__}",
     )
+
     parser.add_argument(
         "provider",
         metavar="PROVIDER",
         type=str.lower,
         help="Name of balance check provider",
     )
+
     parser.add_argument(
-        "input", metavar="INPUT_CSV", type=str, help="Path to input CSV"
+        "input", metavar="INPUT_CSV", type=str, help="Path to input CSV",
     )
+
     parser.add_argument(
         "--output",
         "-o",
@@ -92,7 +95,7 @@ https://stevenmirabito.com/kudos""",
                     if provider_allows_chunks:
                         _chunk.append(card_data)
                         if (
-                            i + 1
+                                i + 1
                         ) % provider.max_simultaneous:  # If end of chunk, send to schedule...
                             # Schedule balance check
                             future = executor.submit(provider.check_balance, _chunk)
@@ -118,20 +121,33 @@ https://stevenmirabito.com/kudos""",
 
                 try:
                     balance_info = future.result()
+
+                    # !! NEEDS WORK, UNFINISHED
+                    if provider_allows_chunks:
+                        # List of balances from chunk of cards returned
+                        for i, balance_info in enumerate(balances_info):
+                            results[idx] = dict(results[idx], **balance_info)
+                            # If not on last cards balance info...
+                            if len(balance_info) - 1 != i:
+                                idx += 1
+                    else:
+                        # Single balance returned
+                        results[idx] = dict(results[idx], **balance_info)
                 except Exception as e:
                     # Log the first column value as an ID (usually card number)
                     card_id = next(iter(results[idx].values()))
 
                     # Attempt to schedule retry
-                    if idx in retries:
-                        # Out of retries?
-                        if retries[idx] > config.RETRY_TIMES:
-                            logger.error(
-                                f"Failed to balance check {card_id} (out of retries). Last error: {e}"
-                            )
-                    else:
+                    if idx not in retries:
                         # First retry
                         retries[idx] = 1
+
+                    # Out of retries?
+                    if retries[idx] >= config.RETRY_TIMES:
+                        logger.error(
+                            f"Failed to balance check {card_id} (out of retries). Last error: {e}"
+                        )
+                        continue
 
                     # explicit error report
                     # executor.submit(logger.error, "error occurred", exc_info=sys.exc_info())
@@ -144,19 +160,6 @@ https://stevenmirabito.com/kudos""",
                     future = executor.submit(provider.check_balance, **results[idx])
                     futures[future] = idx
                     retries[idx] += 1
-
-                else:  # Successful balance(s) returned
-                    # !! NEEDS WORK, UNFINISHED
-                    if provider_allows_chunks:
-                        # List of balances from chunk of cards returned
-                        for i, balance_info in enumerate(balances_info):
-                            results[idx] = dict(results[idx], **balance_info)
-                            # If not on last cards balance info...
-                            if len(balance_info) - 1 != i:
-                                idx += 1
-                    else:
-                        # Single balance returned
-                        results[idx] = dict(results[idx], **balance_info)
 
     try:
         with open(out_filename, "w", newline="") as output_csv:

@@ -106,11 +106,11 @@ Clone this repository, set up your virutal environment, and install the dependen
 git clone https://github.com/stevenmirabito/balance-check.git
 cd balance-check
 virtualenv .venv -p python3
-pip install .
+pip install -r requirements.txt
 pre-commit install
 ```
 
-You will have the `balance-check` CLI on your path. You may need to `pip install .` again after making code changes in order to sync the changes with the virtualenv.
+You can invoke the tool by running `python -m balance_check` in place of `balance-check`.
 
 Please fork this repository, push to your fork, and open a pull request to contribute changes.
 

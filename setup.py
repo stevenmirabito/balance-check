@@ -7,21 +7,8 @@ from setuptools import setup, find_packages
 with open(os.path.join("balance_check", "version.py"), "rb") as f:
     exec(f.read())
 
-requirements = [
-    "beautifulsoup4",
-    "black",
-    "Cerberus",
-    "colorlog",
-    "luhn",
-    "pre-commit",
-    "python3-anticaptcha",
-    "requests",
-    "tqdm",
-    "lxml",
-    "fake_useragent",
-    "selenium",
-    "chromedriver-binary==74.0.3729.6.0",
-]
+with open("requirements.txt") as f:
+    requirements = f.read().splitlines()
 
 setup(
     name="balance_check",
@@ -32,6 +19,6 @@ setup(
     author_email="steven@stevenmirabito.com",
     license="MIT",
     packages=find_packages(),
-    entry_points={"console_scripts": ["balance-check=balance_check.cli:main"]},
+    entry_points={"console_scripts": ["balance-check=balance_check.__main__:main"]},
     install_requires=requirements,
 )
