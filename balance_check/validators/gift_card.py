@@ -19,7 +19,7 @@ merchant_regex = {
     Merchant.BestBuy: re.compile("^(61|60)[0-9]{14}$"),
     Merchant.Nike: re.compile("^606010[0-9]{13}"),
     # Merchant.Lowes: TODO
-    Merchant.HomeDepot: re.compile("^98061[0-9]{18}"),
+    Merchant.HomeDepot: re.compile("^9\d{22}"),
     Merchant.GuitarCenter: re.compile("^61(53|64)[0-9]{12}"),
 }
 
@@ -34,9 +34,7 @@ def GiftCardSchema(merchant):
             "required": True,
             "type": "string",
             "empty": False,
-            "validator": [
-                merchant_check
-            ]
+            "validator": [merchant_check],
         },
         "pin": {
             "required": True,

@@ -16,7 +16,8 @@ Automation tool for checking the balance of gift cards issued by various provide
 - [Blackhawk / Gift Card Mall / Simon / 5Back](https://mygift.giftcardmall.com) - `blackhawk` <sup>CAPTCHA</sup>
 - [Spafinder](https://www.spafinder.com/pages/card-balance-inquiry/vpln) - `spafinder` <sup>CAPTCHA</sup>
 - [GameStop](https://www.gamestop.com/profiles/valuelookup.aspx) - `gamestop` <sup>CAPTCHA</sup>
-- Best Buy - `bestbuy`
+- [Best Buy](https://www.bestbuy.com/gift-card-balance) - `bestbuy`
+- [Home Depot](https://www.homedepot.com/mycheckout/giftcard) - `homedepot` <sup>CAPTCHA</sup>
 
 Providers marked with <sup>CAPTCHA</sup> will require an [Anti-CAPTCHA](https://anti-captcha.com) API key.
 
