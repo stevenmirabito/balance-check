@@ -9,4 +9,5 @@ requests
 tqdm
 lxml
 selenium
+pyppeteer
 chromedriver-binary

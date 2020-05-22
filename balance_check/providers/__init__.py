@@ -9,4 +9,5 @@ __all__ = [
     "onevanilla",
     "prepaidgiftbalance",
     "spafinder",
+    "starbucks",
 ]

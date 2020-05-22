@@ -18,6 +18,7 @@ Automation tool for checking the balance of gift cards issued by various provide
 - [GameStop](https://www.gamestop.com/giftcards/) - `gamestop` <sup>CAPTCHA</sup>
 - [Best Buy](https://www.bestbuy.com/gift-card-balance) - `bestbuy`
 - [Home Depot](https://www.homedepot.com/mycheckout/giftcard) - `homedepot` <sup>CAPTCHA</sup>
+- [Starbucks](https://www.starbucks.com/card) - `starbucks`
 
 Providers marked with <sup>CAPTCHA</sup> will require an [Anti-CAPTCHA](https://anti-captcha.com) API key.
 
