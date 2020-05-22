@@ -9,6 +9,7 @@ class Merchant(Enum):
     Nike = "Nike"
     Southwest = "Southwest Airlines"
     GuitarCenter = "Guitar Center"
+    Starbucks = "Starbucks"
 
 
 merchant_regex = {
@@ -21,6 +22,7 @@ merchant_regex = {
     # Merchant.Lowes: TODO
     Merchant.HomeDepot: re.compile("^9\d{22}"),
     Merchant.GuitarCenter: re.compile("^61(53|64)[0-9]{12}"),
+    Merchant.Starbucks: re.compile("^61\d{14}"),
 }
 
 
@@ -34,7 +36,7 @@ def GiftCardSchema(merchant):
             "required": True,
             "type": "string",
             "empty": False,
-            "validator": [merchant_check],
+            "check_with": merchant_check,
         },
         "pin": {
             "required": True,
