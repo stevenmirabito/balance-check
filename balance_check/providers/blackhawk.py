@@ -1,8 +1,7 @@
-import sys
 import requests
 from bs4 import BeautifulSoup
 from balance_check import logger, config
-from balance_check.utils.captcha import CaptchaSolver
+from balance_check.utils.captcha import CaptchaSolver, extract_arkose_key
 from balance_check.provider import BalanceCheckProvider
 from balance_check.validators.credit_card import Issuer, CreditCardSchema
 
@@ -24,17 +23,15 @@ class Blackhawk(BalanceCheckProvider):
 
         resp = session.get(self.website_url)
         if resp.status_code != 200:
-            logger.critical(
+            raise RuntimeError(
                 f"Failed to GET Blackhawk website (status code {resp.status_code})"
             )
-            sys.exit(1)
 
         page_html = BeautifulSoup(resp.content, features="html.parser")
         transactions = page_html.find(id="CheckBalanceTransactions")
         form = transactions.find("form")
         if not form:
-            logger.critical("Unable to find balance check form")
-            sys.exit(1)
+            raise RuntimeError("Unable to find balance check form")
 
         endpoint = "{}{}".format(self.website_url, form["action"])
 
@@ -42,29 +39,24 @@ class Blackhawk(BalanceCheckProvider):
             "input", attrs={"name": "__RequestVerificationToken"}
         )
         if not token_field:
-            logger.critical("Failed to retrieve verification token")
-            sys.exit(1)
+            raise RuntimeError("Failed to retrieve verification token")
 
         fields["__RequestVerificationToken"] = token_field["value"]
 
-        recaptcha_field = transactions.find("div", class_="g-recaptcha")
-        if not recaptcha_field:
-            logger.critical("Unable to find reCAPTCHA")
-            sys.exit(1)
+        arkose_key = extract_arkose_key(resp.text)
+        if not arkose_key:
+            raise RuntimeError("Failed to extract Arkose Labs public key")
 
-        site_key = recaptcha_field["data-sitekey"]
-
-        logger.info("Solving reCAPTCHA (~30s)")
+        logger.info("Solving FunCaptcha (~30s)")
 
         captcha_solver = CaptchaSolver(api_key=config.ANTI_CAPTCHA_KEY)
-        captcha = captcha_solver.solve_recaptcha(self.website_url, site_key)
+        captcha = captcha_solver.solve_funcaptcha(self.website_url, arkose_key)
         if captcha["errorId"] != 0:
-            logger.critical(
-                "Unable to solve reCAPTCHA ({})".format(captcha["errorDescription"])
+            raise RuntimeError(
+                "Unable to solve FunCaptcha ({})".format(captcha["errorDescription"])
             )
-            sys.exit(1)
 
-        fields["g-recaptcha-response"] = captcha["solution"]["gRecaptchaResponse"]
+        fields["captchaToken"] = captcha["solution"]["token"]
 
         logger.info("Fetching card balance")
 
@@ -84,12 +76,11 @@ class Blackhawk(BalanceCheckProvider):
 
         form_resp = session.post(endpoint, data=fields)
         if form_resp.status_code != 200:
-            logger.critical(
+            raise RuntimeError(
                 "Failed to retrieve card balance (status code {})".format(
                     form_resp.status_code
                 )
             )
-            sys.exit(1)
 
         balance_html = BeautifulSoup(form_resp.content, features="html.parser")
 
